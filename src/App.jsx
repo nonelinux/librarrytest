@@ -1,85 +1,142 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 
-const initialBooks = [
-  { id: 1, title: "Преступление и наказание", author: "Ф. Достоевский" },
-  { id: 2, title: "Мастер и Маргарита", author: "М. Булгаков" },
-  { id: 3, title: "Евгений Онегин", author: "А. Пушкин" },
-  { id: 4, title: "Герой нашего времени", author: "М. Лермонтов" }
-];
+// --- ВСТАВЬ СЮДА СВОИ ДАННЫЕ ИЗ FIREBASE CONSOLE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAGyw8mIxEGI-iVveToUEzBH8IQLRQK_oQ",
+  authDomain: "loginsofflibrarry.firebaseapp.com",
+  projectId: "loginsofflibrarry",
+  storageBucket: "Тloginsofflibrarry.firebasestorage.app",
+  messagingSenderId: "24575544080",
+  appId: "1:24575544080:web:1d338de5b963ce2726f395"
+};
 
-export default function App() {
-  const [form, setForm] = useState({ name: '', book: '' });
-  const [status, setStatus] = useState('');
+// Инициализация Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-  const G_URL = "https://script.google.com/macros/s/AKfycbxHUuiJV9xvXplyqfH_uWyippqguflWydVYW8JbRM1eZ-U7NoDgI7oZOtmqgwM6FkOA0w/exec";
+// --- СТИЛИ (CSS-in-JS) ---
+const styles = {
+  nav: { background: '#1a1a1a', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.3)', fontFamily: 'sans-serif' },
+  logo: { color: '#646cff', fontSize: '1.5rem', fontWeight: 'bold', textDecoration: 'none' },
+  navLinks: { display: 'flex', gap: '20px', alignItems: 'center' },
+  link: { color: '#fff', textDecoration: 'none', fontSize: '1rem', transition: '0.3s' },
+  container: { maxWidth: '1200px', margin: '40px auto', padding: '0 20px', fontFamily: 'sans-serif', color: '#fff' },
+  card: { background: '#242424', padding: '30px', borderRadius: '12px', border: '1px solid #333', textAlign: 'center', maxWidth: '400px', margin: '0 auto' },
+  input: { width: '100%', padding: '12px', margin: '10px 0', borderRadius: '8px', border: '1px solid #444', background: '#1a1a1a', color: '#fff', boxSizing: 'border-box' },
+  btn: { width: '100%', padding: '12px', background: '#646cff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', marginTop: '10px' },
+  btnOut: { background: 'transparent', border: '1px solid #ff4757', color: '#ff4757', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', marginLeft: '10px' }
+};
 
-  const sendOrder = async (e) => {
-    e.preventDefault();
-    setStatus('Отправка...');
-    
+// --- КОМПОНЕНТ: НАВИГАЦИЯ ---
+const Navbar = ({ user }) => (
+  <nav style={styles.nav}>
+    <Link to="/" style={styles.logo}>🏫 Школа-Либ</Link>
+    <div style={styles.navLinks}>
+      <Link to="/" style={styles.link}>Книги</Link>
+      <Link to="/order" style={styles.link}>Заказать</Link>
+      {user ? (
+        <div style={{color: '#aaa', fontSize: '0.9rem'}}>
+          {user.email} <button onClick={() => signOut(auth)} style={styles.btnOut}>Выйти</button>
+        </div>
+      ) : (
+        <Link to="/auth" style={{...styles.link, background: '#646cff', padding: '8px 15px', borderRadius: '6px'}}>Войти</Link>
+      )}
+    </div>
+  </nav>
+);
+
+// --- СТРАНИЦА: ВХОД / РЕГИСТРАЦИЯ ---
+const AuthPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAuth = async () => {
     try {
-      await fetch(G_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(form)
-      });
-      
-      setStatus('Заявка принята! Проверь таблицу.');
-      setForm({ name: '', book: '' });
-    } catch (err) {
-      setStatus('Ошибка соединения');
-      console.error(err);
-    }
+      if (isRegister) { await createUserWithEmailAndPassword(auth, email, password); alert("Успех!"); }
+      else { await signInWithEmailAndPassword(auth, email, password); }
+      navigate('/');
+    } catch (e) { alert("Ошибка: " + e.message); }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-8 font-sans">
-      <nav className="flex justify-between items-center mb-12 border-b border-slate-700 pb-4 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-black italic text-cyan-400 tracking-tighter">БИБЛИОТЕКА 518</h1>
-        <a href="https://518shkola.oshkole.ru" target="_blank" className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg border border-slate-600 transition-all text-sm">Сайт школы</a>
-      </nav>
-
-      <main className="max-w-2xl mx-auto">
-        <h2 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Каталог книг</h2>
-        
-        <div className="grid gap-4 mb-12">
-          {initialBooks.map(book => (
-            <div key={book.id} className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700 hover:border-cyan-500/50 transition-all">
-              <div className="font-bold text-xl text-white">{book.title}</div>
-              <div className="text-slate-400 italic text-sm">{book.author}</div>
-            </div>
-          ))}
-        </div>
-
-        <section className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
-          <h3 className="text-2xl font-bold mb-6 text-cyan-400">Заказать книгу</h3>
-          <form className="space-y-4" onSubmit={sendOrder}>
-            <input 
-              required
-              value={form.name}
-              onChange={e => setForm({...form, name: e.target.value})}
-              type="text" 
-              placeholder="Твоё имя" 
-              className="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl focus:outline-none focus:border-cyan-500 transition-colors" 
-            />
-            <input 
-              required
-              value={form.book}
-              onChange={e => setForm({...form, book: e.target.value})}
-              type="text" 
-              placeholder="Название книги" 
-              className="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl focus:outline-none focus:border-cyan-500 transition-colors" 
-            />
-            <button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-500 py-4 rounded-xl font-bold text-lg shadow-lg shadow-cyan-900/20 transition-all active:scale-95">Отправить заявку</button>
-            {status && <p className="mt-4 text-center text-cyan-400 font-medium animate-pulse">{status}</p>}
-          </form>
-        </section>
-      </main>
-
-      <footer className="mt-20 border-t border-slate-800 pt-8 text-center">
-        <p className="text-slate-500 text-sm tracking-widest uppercase font-semibold">Сделано учеником 518 школы</p>
-      </footer>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2>{isRegister ? 'Создать аккаунт' : 'Вход'}</h2>
+        <input type="email" placeholder="Email" onChange={e => setEmail(e.target.value)} style={styles.input} />
+        <input type="password" placeholder="Пароль" onChange={e => setPassword(e.target.value)} style={styles.input} />
+        <button onClick={handleAuth} style={styles.btn}>{isRegister ? 'Зарегистрироваться' : 'Войти'}</button>
+        <p onClick={() => setIsRegister(!isRegister)} style={{color: '#646cff', cursor: 'pointer', marginTop: '20px', fontSize: '0.9rem'}}>
+          {isRegister ? 'Уже есть аккаунт? Войдите' : 'Нет аккаунта? Регистрация'}
+        </p>
+      </div>
     </div>
   );
+};
+
+// --- СТРАНИЦА: КАТАЛОГ ---
+const HomePage = () => (
+  <div style={styles.container}>
+    <h1>📚 Библиотека книг</h1>
+    <p style={{color: '#aaa'}}>Добро пожаловать! Выберите книгу для заказа.</p>
+    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginTop: '30px'}}>
+      {['Гарри Поттер', '1984', 'Мастер и Маргарита'].map(book => (
+        <div key={book} style={{...styles.card, maxWidth: 'none', textAlign: 'left'}}>
+          <h3>{book}</h3>
+          <Link to="/order" state={{ title: book }} style={{color: '#646cff', textDecoration: 'none'}}>Забронировать →</Link>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// --- СТРАНИЦА: ЗАКАЗ ---
+const OrderPage = ({ user }) => {
+  const location = useLocation();
+  const bookTitle = location.state?.title || "";
+  const [book, setBook] = useState(bookTitle);
+
+  if (!user) return <div style={styles.container}><h2>⚠️ Сначала нужно <Link to="/auth" style={{color:'#646cff'}}>войти</Link></h2></div>;
+
+  return (
+    <div style={styles.container}>
+      <div style={{...styles.card, margin: '0'}}>
+        <h2>Оформить заказ</h2>
+        <p>Пользователь: <b>{user.email}</b></p>
+        <input value={book} placeholder="Название книги" onChange={e => setBook(e.target.value)} style={styles.input} />
+        <button onClick={() => alert('Заказ на "' + book + '" отправлен!')} style={{...styles.btn, background: '#2ecc71'}}>Подтвердить</button>
+      </div>
+    </div>
+  );
+};
+
+// --- ГЛАВНЫЙ КОМПОНЕНТ ---
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); });
+    return () => unsub();
+  }, []);
+
+  if (loading) return <div style={{color: '#fff', textAlign: 'center', marginTop: '50px'}}>Загрузка...</div>;
+
+  return (
+    <Router>
+      <div style={{minHeight: '100vh', background: '#1a1a1a'}}>
+        <Navbar user={user} />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/order" element={<OrderPage user={user} />} />
+          <Route path="/auth" element={<AuthPage />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
+
