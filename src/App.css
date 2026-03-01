@@ -1,0 +1,154 @@
+/* App.css */
+:root {
+  --spb-red: #c62828; /* Насыщенный красный СПб 518 */
+  --spb-dark-red: #8e0000;
+  --bg-color: #f9f9f9;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+}
+
+.spb-header {
+  background: white;
+  border-bottom: 5px solid var(--spb-red);
+  padding: 15px 0;
+}
+
+.header-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 20px;
+}
+
+.spb-emblem {
+  height: 80px;
+  width: auto;
+}
+
+.header-text {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.header-text h1 {
+  margin: 0;
+  color: var(--spb-red);
+  font-size: 26px;
+  letter-spacing: 1px;
+}
+
+.header-text p {
+  margin: 5px 0 0;
+  color: #555;
+  font-weight: 500;
+}
+
+.school-link-btn {
+  border: 2px solid var(--spb-red);
+  color: var(--spb-red);
+  padding: 8px 15px;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.spb-nav {
+  background: var(--spb-red);
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.spb-nav button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 15px 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.spb-nav button:hover, .spb-nav button.active {
+  background: var(--spb-dark-red);
+}
+
+.spb-main {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+  min-height: 60vh;
+}
+
+.title-red {
+  color: var(--spb-red);
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  background: white;
+  border: 1px solid #eee;
+  display: flex;
+  padding: 15px;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.book-img img {
+  width: 130px;
+  height: 180px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
+.book-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.status {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 8px;
+  width: fit-content;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.in-stock { background: #e8f5e9; color: #2e7d32; }
+.out-stock { background: #ffebee; color: #c62828; }
+
+.order-btn-spb {
+  margin-top: auto;
+  background: var(--spb-red);
+  color: white;
+  border: none;
+  padding: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.order-btn-spb:disabled { background: #ccc; }
+
+.spb-footer {
+  text-align: center;
+  padding: 30px;
+  background: #333;
+  color: white;
+  font-size: 14px;
+}
