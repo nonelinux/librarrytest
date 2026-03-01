@@ -1,142 +1,205 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, collection, addDoc, updateDoc, doc, query, where, onSnapshot, getDoc, setDoc } from "firebase/firestore";
 
-// --- ВСТАВЬ СЮДА СВОИ ДАННЫЕ ИЗ FIREBASE CONSOLE ---
 const firebaseConfig = {
   apiKey: "AIzaSyAGyw8mIxEGI-iVveToUEzBH8IQLRQK_oQ",
   authDomain: "loginsofflibrarry.firebaseapp.com",
   projectId: "loginsofflibrarry",
-  storageBucket: "Тloginsofflibrarry.firebasestorage.app",
+  storageBucket: "loginsofflibrarry.firebasestorage.app",
   messagingSenderId: "24575544080",
   appId: "1:24575544080:web:1d338de5b963ce2726f395"
 };
 
-// Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-// --- СТИЛИ (CSS-in-JS) ---
-const styles = {
-  nav: { background: '#1a1a1a', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.3)', fontFamily: 'sans-serif' },
-  logo: { color: '#646cff', fontSize: '1.5rem', fontWeight: 'bold', textDecoration: 'none' },
-  navLinks: { display: 'flex', gap: '20px', alignItems: 'center' },
-  link: { color: '#fff', textDecoration: 'none', fontSize: '1rem', transition: '0.3s' },
-  container: { maxWidth: '1200px', margin: '40px auto', padding: '0 20px', fontFamily: 'sans-serif', color: '#fff' },
-  card: { background: '#242424', padding: '30px', borderRadius: '12px', border: '1px solid #333', textAlign: 'center', maxWidth: '400px', margin: '0 auto' },
-  input: { width: '100%', padding: '12px', margin: '10px 0', borderRadius: '8px', border: '1px solid #444', background: '#1a1a1a', color: '#fff', boxSizing: 'border-box' },
-  btn: { width: '100%', padding: '12px', background: '#646cff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', marginTop: '10px' },
-  btnOut: { background: 'transparent', border: '1px solid #ff4757', color: '#ff4757', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', marginLeft: '10px' }
-};
+const logoUrl = "https://avatars.mds.yandex.net";
 
-// --- КОМПОНЕНТ: НАВИГАЦИЯ ---
-const Navbar = ({ user }) => (
-  <nav style={styles.nav}>
-    <Link to="/" style={styles.logo}>🏫 Школа-Либ</Link>
-    <div style={styles.navLinks}>
-      <Link to="/" style={styles.link}>Книги</Link>
-      <Link to="/order" style={styles.link}>Заказать</Link>
-      {user ? (
-        <div style={{color: '#aaa', fontSize: '0.9rem'}}>
-          {user.email} <button onClick={() => signOut(auth)} style={styles.btnOut}>Выйти</button>
-        </div>
-      ) : (
-        <Link to="/auth" style={{...styles.link, background: '#646cff', padding: '8px 15px', borderRadius: '6px'}}>Войти</Link>
-      )}
-    </div>
-  </nav>
-);
+// --- СТИЛИ ---
+const styles = `
+  :root { --main-red: #cc2222; --bg: #0a0c10; --card: #161b22; --text: #f0f6fc; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+  
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 5%; background: #fff; border-bottom: 3px solid var(--main-red); position: sticky; top: 0; z-index: 1000; }
+  .logo-link { display: flex; align-items: center; text-decoration: none; gap: 10px; }
+  .nav-logo { height: 50px; border-radius: 5px; }
+  .nav-links { display: flex; gap: 20px; align-items: center; }
+  .nav-links a, .nav-links button { color: #333; text-decoration: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; background: none; }
 
-// --- СТРАНИЦА: ВХОД / РЕГИСТРАЦИЯ ---
-const AuthPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
-  const navigate = useNavigate();
+  .hero { text-align: center; padding: 40px 20px; }
+  .event-card { background: var(--card); border-radius: 15px; overflow: hidden; margin-bottom: 30px; border: 1px solid #30363d; display: flex; flex-direction: column; }
+  .event-img { width: 100%; height: 250px; object-fit: cover; }
+  .event-content { padding: 20px; text-align: left; }
 
-  const handleAuth = async () => {
-    try {
-      if (isRegister) { await createUserWithEmailAndPassword(auth, email, password); alert("Успех!"); }
-      else { await signInWithEmailAndPassword(auth, email, password); }
-      navigate('/');
-    } catch (e) { alert("Ошибка: " + e.message); }
-  };
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 20px 5%; }
+  .book-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #30363d; transition: 0.3s; }
+  .book-card:hover { border-color: var(--main-red); }
+  .book-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; }
+
+  .btn { width: 100%; padding: 12px; background: var(--main-red); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; margin-top: 10px; }
+  .box { max-width: 450px; margin: 40px auto; background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid #30363d; }
+  .input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; }
+`;
+
+// --- ГЛАВНАЯ (СОБЫТИЯ) ---
+const Home = () => {
+  const [events, setEvents] = useState([]);
+  useEffect(() => {
+    return onSnapshot(collection(db, "events"), (snap) => {
+      setEvents(snap.docs.map(d => d.data()));
+    });
+  }, []);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2>{isRegister ? 'Создать аккаунт' : 'Вход'}</h2>
-        <input type="email" placeholder="Email" onChange={e => setEmail(e.target.value)} style={styles.input} />
-        <input type="password" placeholder="Пароль" onChange={e => setPassword(e.target.value)} style={styles.input} />
-        <button onClick={handleAuth} style={styles.btn}>{isRegister ? 'Зарегистрироваться' : 'Войти'}</button>
-        <p onClick={() => setIsRegister(!isRegister)} style={{color: '#646cff', cursor: 'pointer', marginTop: '20px', fontSize: '0.9rem'}}>
-          {isRegister ? 'Уже есть аккаунт? Войдите' : 'Нет аккаунта? Регистрация'}
-        </p>
+    <div className="container" style={{maxWidth:'900px', margin:'0 auto', padding:'20px'}}>
+      <div className="hero">
+        <img src={logoUrl} alt="лого" style={{height:'100px', marginBottom:'20px'}} />
+        <h1 style={{fontSize:'2.5rem'}}>Новости Библиотеки 518</h1>
       </div>
-    </div>
-  );
-};
-
-// --- СТРАНИЦА: КАТАЛОГ ---
-const HomePage = () => (
-  <div style={styles.container}>
-    <h1>📚 Библиотека книг</h1>
-    <p style={{color: '#aaa'}}>Добро пожаловать! Выберите книгу для заказа.</p>
-    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginTop: '30px'}}>
-      {['Гарри Поттер', '1984', 'Мастер и Маргарита'].map(book => (
-        <div key={book} style={{...styles.card, maxWidth: 'none', textAlign: 'left'}}>
-          <h3>{book}</h3>
-          <Link to="/order" state={{ title: book }} style={{color: '#646cff', textDecoration: 'none'}}>Забронировать →</Link>
+      {events.map((e, i) => (
+        <div key={i} className="event-card">
+          {e.image && <img src={e.image} className="event-img" alt="event" />}
+          <div className="event-content">
+            <span style={{color: 'var(--main-red)', fontSize:'0.8rem'}}>{e.date}</span>
+            <h2 style={{marginTop:'5px'}}>{e.title}</h2>
+            <p style={{color:'#8b949e'}}>{e.description}</p>
+          </div>
         </div>
       ))}
     </div>
-  </div>
-);
+  );
+};
 
-// --- СТРАНИЦА: ЗАКАЗ ---
-const OrderPage = ({ user }) => {
-  const location = useLocation();
-  const bookTitle = location.state?.title || "";
-  const [book, setBook] = useState(bookTitle);
-
-  if (!user) return <div style={styles.container}><h2>⚠️ Сначала нужно <Link to="/auth" style={{color:'#646cff'}}>войти</Link></h2></div>;
+// --- КАТАЛОГ ---
+const Catalog = () => {
+  const [books, setBooks] = useState([]);
+  useEffect(() => {
+    return onSnapshot(collection(db, "books"), (snap) => {
+      setBooks(snap.docs.map(d => ({ docId: d.id, ...d.data() })));
+    });
+  }, []);
 
   return (
-    <div style={styles.container}>
-      <div style={{...styles.card, margin: '0'}}>
-        <h2>Оформить заказ</h2>
-        <p>Пользователь: <b>{user.email}</b></p>
-        <input value={book} placeholder="Название книги" onChange={e => setBook(e.target.value)} style={styles.input} />
-        <button onClick={() => alert('Заказ на "' + book + '" отправлен!')} style={{...styles.btn, background: '#2ecc71'}}>Подтвердить</button>
-      </div>
+    <div className="grid">
+      {books.map(b => (
+        <div key={b.docId} className="book-card">
+          <img src={b.image || b.имидж} className="book-img" alt="" />
+          <h4 style={{margin:'10px 0 5px', fontSize:'0.9rem'}}>{b.title || b.титул}</h4>
+          <p style={{fontSize:'0.8rem', color:'#8b949e'}}>{b.author || b.автор}</p>
+          <span style={{fontSize:'10px', color: (b.status || b.статус) === 'В наличии' ? '#2ecc71' : '#f85149'}}>
+            {(b.status || b.статус)}
+          </span>
+          {(b.status || b.статус) === 'В наличии' ? (
+            <Link to="/order" state={{t: b.title || b.титул, id: b.docId}} className="btn" style={{textDecoration:'none', textAlign:'center', display:'block'}}>ВЗЯТЬ</Link>
+          ) : <div className="btn" style={{background:'#333', textAlign:'center'}}>ВЫДАНА</div>}
+        </div>
+      ))}
     </div>
   );
 };
 
-// --- ГЛАВНЫЙ КОМПОНЕНТ ---
+// --- ВХОД / РЕГИСТРАЦИЯ ---
+const Auth = () => {
+  const [isReg, setIsReg] = useState(false);
+  const [form, setForm] = useState({ email: '', pass: '', fio: '', class: '' });
+  const nav = useNavigate();
+
+  const handle = async () => {
+    try {
+      if (isReg) {
+        const res = await createUserWithEmailAndPassword(auth, form.email, form.pass);
+        await setDoc(doc(db, "users", res.user.uid), { fio: form.fio, class: form.class, email: form.email });
+      } else {
+        await signInWithEmailAndPassword(auth, form.email, form.pass);
+      }
+      nav('/');
+    } catch (e) { alert(e.message); }
+  };
+
+  return (
+    <div className="box">
+      <h2 style={{textAlign:'center'}}>{isReg ? 'Регистрация читателя' : 'Вход'}</h2>
+      {isReg && (
+        <>
+          <input className="input" placeholder="ФИО полностью" onChange={e => setForm({...form, fio: e.target.value})} />
+          <input className="input" placeholder="Класс (например, 9А)" onChange={e => setForm({...form, class: e.target.value})} />
+        </>
+      )}
+      <input className="input" placeholder="Email" onChange={e => setForm({...form, email: e.target.value})} />
+      <input className="input" type="password" placeholder="Пароль" onChange={e => setForm({...form, pass: e.target.value})} />
+      <button className="btn" onClick={handle}>{isReg ? 'ЗАРЕГИСТРИРОВАТЬСЯ' : 'ВОЙТИ'}</button>
+      <p onClick={() => setIsReg(!isReg)} style={{textAlign:'center', fontSize:'13px', cursor:'pointer', marginTop:'15px', color:'#8b949e'}}>
+        {isReg ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать'}
+      </p>
+    </div>
+  );
+};
+
+// --- ЗАКАЗ ---
+const Order = ({ user }) => {
+  const { state } = useLocation();
+  const nav = useNavigate();
+
+  const confirm = async () => {
+    if (!user) return nav('/auth');
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+    const userData = userSnap.data();
+
+    await addDoc(collection(db, "orders"), {
+      userEmail: user.email,
+      fio: userData.fio,
+      class: userData.class,
+      book: state.t,
+      date: new Date().toLocaleDateString(),
+      status: "Ожидает"
+    });
+    await updateDoc(doc(db, "books", state.id), { status: "Выдана" });
+    alert("Книга забронирована на имя: " + userData.fio);
+    nav('/');
+  };
+
+  return (
+    <div className="box" style={{textAlign:'center'}}>
+      <h3>Подтверждение заказа</h3>
+      <p>Книга: <b>{state?.t}</b></p>
+      <button className="btn" onClick={confirm}>ПОДТВЕРДИТЬ</button>
+    </div>
+  );
+};
+
+// --- MAIN ---
 export default function App() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); });
-    return () => unsub();
-  }, []);
-
-  if (loading) return <div style={{color: '#fff', textAlign: 'center', marginTop: '50px'}}>Загрузка...</div>;
+  useEffect(() => onAuthStateChanged(auth, u => setUser(u)), []);
 
   return (
     <Router>
-      <div style={{minHeight: '100vh', background: '#1a1a1a'}}>
-        <Navbar user={user} />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/order" element={<OrderPage user={user} />} />
-          <Route path="/auth" element={<AuthPage />} />
-        </Routes>
-      </div>
+      <style>{styles}</style>
+      <nav className="nav">
+        <Link to="/" className="logo-link">
+          <img src={logoUrl} className="nav-logo" alt="" />
+          <span style={{color: 'var(--main-red)', fontWeight:'900'}}>LIB.518</span>
+        </Link>
+        <div className="nav-links">
+          <Link to="/">Главная</Link>
+          <Link to="/catalog">Каталог</Link>
+          <a href="https://518shkola.oshkole.ru" target="_blank">Сайт школы</a>
+          {user ? (
+            <button onClick={() => signOut(auth)} style={{color:'var(--main-red)'}}>Выход</button>
+          ) : <Link to="/auth" style={{color:'var(--main-red)'}}>Вход</Link>}
+        </div>
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/catalog" element={<Catalog />} />
+        <Route path="/order" element={<Order user={user} />} />
+        <Route path="/auth" element={<Auth />} />
+      </Routes>
     </Router>
   );
 }
-
