@@ -96,76 +96,57 @@ const Catalog = () => {
 };
 
 // --- [АДМИНКА] ---
-// --- [АДМИНКА С ПОЛНОЙ ЗАЩИТОЙ] ---
 const Admin = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [orders, setOrders] = useState([]);
-  const [newBook, setNewBook] = useState({ 
-    title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 
-  });
+  const [newBook, setNewBook] = useState({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
 
-  // Логика входа и блокировки
   useEffect(() => {
     const checkPassword = async () => {
-      const p = prompt("Доступ ограничен. Введите пароль:");
-      
-      if (!p) {
-        window.location.href = "#/";
-        return;
-      }
+      const p = prompt("Пароль:");
+      if (!p) { window.location.href = "#/"; return; }
 
       try {
-        const response = await fetch('/api/login', {
+        const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: p })
         });
-
-        const data = await response.json();
+        const data = await res.json();
 
         if (data.success) {
           setIsAuth(true);
         } else {
           alert(data.message);
           if (data.banned) {
-            // Твой экран блокировки
-            document.body.innerHTML = `
-              <div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family:sans-serif; text-align:center;">
-                <h1 style="font-size:4rem; text-shadow: 0 0 20px red;">ХАКЕР ЗАБАНЕН</h1>
-                <p style="font-size:1.5rem; color: #666;">Система зафиксировала попытку взлома. IP заблокирован.</p>
-              </div>
-            `;
+            document.body.innerHTML = "<div style='background:black;color:red;height:100vh;display:flex;align-items:center;justify-content:center;'><h1>ХАКЕР ЗАБАНЕН</h1></div>";
           } else {
             window.location.href = "#/";
           }
         }
-      } catch (error) {
-        window.location.href = "#/";
+      } catch (e) { 
+        alert("Ошибка связи с сервером");
+        window.location.href = "#/"; 
       }
     };
-
     checkPassword();
   }, []);
 
-  // Загрузка заказов с сортировкой (только после входа)
+  // Сортировка по новизне (createdAt)
   useEffect(() => { 
     if (isAuth) {
-      // Сортировка: новые заказы (по createdAt) будут сверху
       const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      const unsubscribe = onSnapshot(q, s => {
+      return onSnapshot(q, s => {
         setOrders(s.docs.map(d => ({id: d.id, ...d.data()})));
       });
-      return () => unsubscribe();
     }
   }, [isAuth]);
 
+  // Добавление книг со всеми полями
   const addBook = async () => {
-    if (!newBook.title) return alert("Введите название!");
-    
     const q = query(collection(db, "books"), orderBy("id", "desc"), limit(1));
     const snap = await getDocs(q);
-    let nextId = 1;
-    if (!snap.empty) nextId = Number(snap.docs[0].data().id) + 1;
+    let nextId = snap.empty ? 1 : Number(snap.docs[0].data().id) + 1;
 
     await addDoc(collection(db, "books"), { 
       ...newBook, 
@@ -173,16 +154,15 @@ const Admin = () => {
       count: Number(newBook.count),
       createdAt: Date.now() 
     });
-    
-    alert(`Книга успешно добавлена! ID: ${nextId}`);
+    alert(`Книга добавлена! ID: ${nextId}`);
     setNewBook({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
   };
 
-  const setStatus = async (oid, bid, newStatus, currentBookCount) => {
+  // Кнопки ВЫДАТЬ / ВЕРНУТЬ
+  const setStatus = async (oid, bid, newStatus, currentCount) => {
     await updateDoc(doc(db, "orders", oid), { status: newStatus });
-    
     if (bid) {
-      let updatedCount = Number(currentBookCount || 0);
+      let updatedCount = Number(currentCount || 0);
       if (newStatus === 'В наличии (возврат)') {
          updatedCount += 1;
          await updateDoc(doc(db, "books", bid), { status: 'В наличии', count: updatedCount });
@@ -192,33 +172,36 @@ const Admin = () => {
     }
   };
 
-  if (!isAuth) return null;
+  if (!isAuth) return <h2 style={{textAlign:'center', marginTop:'50px'}}>Проверка...</h2>;
 
   return (
-    <div className="box" style={{maxWidth: '800px', margin: '20px auto'}}>
-      <h2 style={{color: 'red', textAlign: 'center'}}>Панель управления</h2>
+    <div className="box" style={{maxWidth: '800px'}}>
+      <h2 style={{color: 'var(--main-red)', textAlign: 'center'}}>Панель Учителя</h2>
       
-      <div className="box" style={{background: '#111', padding: '15px', marginBottom: '30px'}}>
-         <h4>Добавить книгу</h4>
+      {/* Твоя полная форма добавления */}
+      <div className="box" style={{background: '#000', margin: '20px 0'}}>
+         <h4>Добавить новую книгу</h4>
          <input className="input" placeholder="Название" value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} />
          <input className="input" placeholder="Автор" value={newBook.author} onChange={e => setNewBook({...newBook, author: e.target.value})} />
-         <input className="input" type="number" placeholder="Кол-во" value={newBook.count} onChange={e => setNewBook({...newBook, count: e.target.value})} />
-         <button className="btn" style={{background: 'green', marginTop: '10px'}} onClick={addBook}>СОХРАНИТЬ</button>
+         <input className="input" placeholder="Жанр" value={newBook.genre} onChange={e => setNewBook({...newBook, genre: e.target.value})} />
+         <input className="input" placeholder="URL обложки" value={newBook.image} onChange={e => setNewBook({...newBook, image: e.target.value})} />
+         <input className="input" type="number" placeholder="Количество" value={newBook.count} onChange={e => setNewBook({...newBook, count: e.target.value})} />
+         <button className="btn" style={{background: 'green'}} onClick={addBook}>СОХРАНИТЬ</button>
       </div>
       
-      <h3>Заказы</h3>
+      <h3>Заказы (Новые сверху)</h3>
       {orders.map(o => (
-        <div key={o.id} className="admin-row" style={{borderBottom: '1px solid #333', padding: '10px 0'}}>
+        <div key={o.id} className="admin-row">
           <div>
-            <strong>{o.book}</strong> ({o.fio}) <br/>
-            <small>Статус: {o.status || 'Заказана'}</small>
-          </div>
+            <b>{o.book}</b><br/>
+            <small>{o.fio} {o.class}</small><br/>
+            <span style={{fontSize: '12px'}}>Статус: {o.status || 'Заказана'}</span></div>
           <div>
             {(o.status === 'Заказана' || !o.status) && (
-              <button className="btn-small" onClick={() => setStatus(o.id, o.bookId, 'Выдана', o.bookCount)}>ВЫДАТЬ</button>
+              <button className="btn-small" style={{background:'green'}} onClick={() => setStatus(o.id, o.bookId, 'Выдана', o.bookCount)}>ВЫДАТЬ</button>
             )}
             {o.status === 'Выдана' && (
-              <button className="btn-small" style={{background: '#3498db'}} onClick={() => setStatus(o.id, o.bookId, 'В наличии (возврат)', o.bookCount)}>ВЕРНУТЬ</button>
+              <button className="btn-small" style={{background:'#3498db'}} onClick={() => setStatus(o.id, o.bookId, 'В наличии (возврат)', o.bookCount)}>ВЕРНУТЬ</button>
             )}
           </div>
         </div>
