@@ -103,9 +103,48 @@ const Admin = () => {
   const [newBook, setNewBook] = useState({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
 
   useEffect(() => {
-    const p = prompt("Пароль:");
-    if (p === import.meta.env.VITE_ADMIN_PASS) setIsAuth(true);
-    else window.location.href = "#/";
+    const checkPassword = async () => {
+      const p = prompt("Пароль:");
+      
+      if (!p) {
+        window.location.href = "#/";
+        return;
+      }
+
+      try {
+        // Спрашиваем у нашего нового API в папке /api/login.js
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: p })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setIsAuth(true); // Пускаем в админку
+        } else {
+          alert(data.message); // Показываем "Неверный пароль" или "Забанен"
+          
+          if (data.banned) {
+            // Если забанен, выводим твою задумку с надписью
+            document.body.innerHTML = `
+              <div style="background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; font-family:sans-serif;">
+                <h1 style="font-size:3rem;">ХАКЕР ЗАБАНЕН</h1>
+                <p style="font-size:1.5rem;">Ваш IP заблокирован на 15 минут за попытку взлома.</p>
+              </div>
+            `;
+          } else {
+            window.location.href = "#/";
+          }
+        }
+      } catch (error) {
+        console.error("Ошибка:", error);
+        window.location.href = "#/";
+      }
+    };
+
+    checkPassword();
   }, []);
 
   useEffect(() => { 
