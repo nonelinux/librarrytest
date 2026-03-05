@@ -119,7 +119,7 @@ const Admin = () => {
         } else {
           alert(data.message);
           if (data.banned) {
-            document.body.innerHTML = "<div style='background:black;color:red;height:100vh;display:flex;align-items:center;justify-content:center;'><h1>ХАКЕР ЗАБАНЕН</h1></div>";
+            document.body.innerHTML = "<div style='background:black;color:red;height:100vh;display:flex;align-items:center;justify-content:center;'><h1>ЗАБЛОКИРОВАН ЗА ПРЕВЫШЕНИЕ ПОПЫТОК</h1></div>";
           } else {
             window.location.href = "#/";
           }
