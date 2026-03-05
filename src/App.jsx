@@ -201,16 +201,19 @@ const Catalog = () => {
   );
 };
 
-// --- [АДМИНКА] ---
 const Admin = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [orders, setOrders] = useState([]);
   const [newBook, setNewBook] = useState({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
 
   useEffect(() => {
-    const checkPassword = async () => {
-      const p = prompt("Пароль:");
-      if (!p) { window.location.href = "#/"; return; }
+    let isMounted = true;
+    const check = async () => {
+      if (window.isAdminChecking) return;
+      window.isAdminChecking = true;
+
+      const p = prompt("Пароль администратора:");
+      if (!p) { window.location.href = "#/"; window.isAdminChecking = false; return; }
 
       try {
         const res = await fetch('/api/login', {
@@ -219,56 +222,35 @@ const Admin = () => {
           body: JSON.stringify({ password: p })
         });
         const data = await res.json();
-
-        if (data.success) {
-          setIsAuth(true);
-        } else {
-          alert(data.message);
-          if (data.banned) {
-            document.body.innerHTML = "<div style='background:black;color:red;height:100vh;display:flex;align-items:center;justify-content:center;'><h1>ЗАБЛОКИРОВАН ЗА ПРЕВЫШЕНИЕ ПОПЫТОК</h1></div>";
-          } else {
-            window.location.href = "#/";
-          }
-        }
-      } catch (e) { 
-        alert("Ошибка связи с сервером");
-        window.location.href = "#/"; 
-      }
+        if (isMounted && data.success) setIsAuth(true);
+        else { alert(data.message); window.location.href = "#/"; }
+      } catch (e) { alert("Ошибка сервера"); window.location.href = "#/"; }
+      finally { window.isAdminChecking = false; }
     };
-    checkPassword();
+    check();
+    return () => { isMounted = false; };
   }, []);
 
-  // Сортировка по новизне (createdAt)
-  useEffect(() => { 
+  useEffect(() => {
     if (isAuth) {
       const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      return onSnapshot(q, s => {
-        setOrders(s.docs.map(d => ({id: d.id, ...d.data()})));
-      });
+      return onSnapshot(q, s => setOrders(s.docs.map(d => ({id: d.id, ...d.data()}))));
     }
   }, [isAuth]);
 
-  // Добавление книг со всеми полями
   const addBook = async () => {
     const q = query(collection(db, "books"), orderBy("id", "desc"), limit(1));
     const snap = await getDocs(q);
     let nextId = snap.empty ? 1 : Number(snap.docs[0].data().id) + 1;
-
-    await addDoc(collection(db, "books"), { 
-      ...newBook, 
-      id: nextId, 
-      count: Number(newBook.count),
-      createdAt: Date.now() 
-    });
-    alert(`Книга добавлена! ID: ${nextId}`);
+    await addDoc(collection(db, "books"), { ...newBook, id: nextId, count: Number(newBook.count), createdAt: Date.now() });
+    alert("Книга добавлена!");
     setNewBook({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
   };
 
-  // Кнопки ВЫДАТЬ / ВЕРНУТЬ
-  const setStatus = async (oid, bid, newStatus, currentCount) => {
+  const setStatus = async (oid, bid, newStatus, currentBookCount) => {
     await updateDoc(doc(db, "orders", oid), { status: newStatus });
     if (bid) {
-      let updatedCount = Number(currentCount || 0);
+      let updatedCount = Number(currentBookCount || 0);
       if (newStatus === 'В наличии (возврат)') {
          updatedCount += 1;
          await updateDoc(doc(db, "books", bid), { status: 'В наличии', count: updatedCount });
@@ -278,36 +260,37 @@ const Admin = () => {
     }
   };
 
-  if (!isAuth) return <h2 style={{textAlign:'center', marginTop:'50px'}}>Проверка...</h2>;
+  if (!isAuth) return <div style={{background:'#0a0c10', height:'100vh'}} />;
 
   return (
-    <div className="box" style={{maxWidth: '800px'}}>
-      <h2 style={{color: 'var(--main-red)', textAlign: 'center'}}>Панель Учителя</h2>
-      
-      {/* Твоя полная форма добавления */}
-      <div className="box" style={{background: '#000', margin: '20px 0'}}>
-         <h4>Добавить новую книгу</h4>
-         <input className="input" placeholder="Название" value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} />
-         <input className="input" placeholder="Автор" value={newBook.author} onChange={e => setNewBook({...newBook, author: e.target.value})} />
-         <input className="input" placeholder="Жанр" value={newBook.genre} onChange={e => setNewBook({...newBook, genre: e.target.value})} />
-         <input className="input" placeholder="URL обложки" value={newBook.image} onChange={e => setNewBook({...newBook, image: e.target.value})} />
-         <input className="input" type="number" placeholder="Количество" value={newBook.count} onChange={e => setNewBook({...newBook, count: e.target.value})} />
-         <button className="btn" style={{background: 'green'}} onClick={addBook}>СОХРАНИТЬ</button>
+    <div className="admin-container" style={{maxWidth:'900px', margin:'20px auto', padding:'0 15px'}}>
+      <div style={{background:'var(--card)', padding:'25px', borderRadius:'15px', border:'1px solid #30363d', marginBottom:'20px'}}>
+        <h2 style={{color:'var(--main-red)', marginTop:0}}>➕ Новое поступление</h2>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
+          <input className="input" placeholder="Название" value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} />
+          <input className="input" placeholder="Автор" value={newBook.author} onChange={e => setNewBook({...newBook, author: e.target.value})} />
+          <input className="input" placeholder="Жанр" value={newBook.genre} onChange={e => setNewBook({...newBook, genre: e.target.value})} />
+          <input className="input" type="number" placeholder="Кол-во" value={newBook.count} onChange={e => setNewBook({...newBook, count: e.target.value})} />
+          <input className="input" style={{gridColumn:'span 2'}} placeholder="Ссылка на обложку" value={newBook.image} onChange={e => setNewBook({...newBook, image: e.target.value})} />
+        </div>
+        <button className="btn" style={{background:'#2ea043', marginTop:'15px'}} onClick={addBook}>СОХРАНИТЬ В КАТАЛОГ</button>
       </div>
-      
-      <h3>Заказы (Новые сверху)</h3>
+
+      <h3 style={{color:'#8b949e', marginBottom:'15px'}}>📦 Текущие заказы</h3>
       {orders.map(o => (
-        <div key={o.id} className="admin-row">
-          <div>
-            <b>{o.book}</b><br/>
-            <small>{o.fio} {o.class}</small><br/>
-            <span style={{fontSize: '12px'}}>Статус: {o.status || 'Заказана'}</span></div>
-          <div>
+        <div key={o.id} className="admin-row" style={{background:'var(--card)', padding:'15px', borderRadius:'10px', marginBottom:'10px', display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid #30363d'}}>
+          <div><b style={{fontSize:'1.1rem'}}>{o.book}</b><br/>
+            <span style={{color:'#8b949e'}}>{o.fio} • {o.class} класс</span><br/>
+            <span className={`badge ${o.status === 'Выдана' ? 'green' : 'yellow'}`} style={{marginTop:'5px', display:'inline-block'}}>
+              {o.status || 'Заказана'}
+            </span>
+          </div>
+          <div style={{display:'flex', gap:'10px'}}>
             {(o.status === 'Заказана' || !o.status) && (
-              <button className="btn-small" style={{background:'green'}} onClick={() => setStatus(o.id, o.bookId, 'Выдана', o.bookCount)}>ВЫДАТЬ</button>
+              <button className="btn" style={{background:'#2ea043', width:'120px', padding:'8px'}} onClick={() => setStatus(o.id, o.bookId, 'Выдана', o.bookCount)}>ВЫДАТЬ</button>
             )}
             {o.status === 'Выдана' && (
-              <button className="btn-small" style={{background:'#3498db'}} onClick={() => setStatus(o.id, o.bookId, 'В наличии (возврат)', o.bookCount)}>ВЕРНУТЬ</button>
+              <button className="btn" style={{background:'#3498db', width:'120px', padding:'8px'}} onClick={() => setStatus(o.id, o.bookId, 'В наличии (возврат)', o.bookCount)}>ВЕРНУТЬ</button>
             )}
           </div>
         </div>
