@@ -1,20 +1,10 @@
-// --ПРОЖАРКА ХАКЕРА---
-setInterval(() => {
-  debugger;
-}, 100);
-console.log('%cВНИМАНИЕ: СИСТЕМА ЗАЩИТЫ ШКОЛЫ 518 АКТИВИРОВАНА!', 'color: red; font-size: 30px; font-weight: bold;');
-console.log('%cВаш IP и действия залогированы. Попытка взлома передана администратору.', 'color: white; background: black; padding: 5px;');
-// Если кто-то пытается вызвать функцию, которой нет в интерфейсе
-window.hackSystem = () => {
-   alert("Nice try! Твой UID отправлен в базу нарушителей 518.");
-};
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, collection, addDoc, updateDoc, doc, query, where, onSnapshot, getDoc, setDoc, deleteDoc, orderBy, limit, getDocs } from "firebase/firestore";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { getFirestore, collection, addDoc, updateDoc, doc, query, onSnapshot, orderBy, limit, getDocs } from "firebase/firestore";
 
+// --- КОНФИГУРАЦИЯ ---
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "loginsofflibrarry.firebaseapp.com",
@@ -28,192 +18,53 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const logoUrl = "data:image/jpeg;base64,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";
-
+// --- СТИЛИ (Адаптация + Админка) ---
 const styles = `
-:root { --main-red: #cc2222; --bg: #0a0c10; --card: #161b22; --text: #f0f6fc; }
+  :root { --red: #cc2222; --bg: #0a0c10; --card: #161b22; --text: #f0f6fc; --green: #2ea043; }
   *, *:before, *:after { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
   
-  /* Навигация */
-  .nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #fff; border-bottom: 3px solid var(--main-red); position: sticky; top: 0; z-index: 1000; }
-  .logo-link { text-decoration: none; color: var(--main-red); font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;}
-  .nav-logo { height: 35px; }
-  .nav-links { display: flex; gap: 10px; }
-  .nav-links a, .nav-links button { color: #333; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: none; background: transparent; cursor: pointer; }
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 3px solid var(--red); position: sticky; top: 0; z-index: 1000; }
+  .logo { text-decoration: none; color: var(--red); font-weight: 900; font-size: 1.2rem; }
+  .nav-links { display: flex; gap: 15px; align-items: center; }
+  .nav-links a, .nav-links button { color: #333; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: none; background: none; cursor: pointer; }
 
-  /* Сетка книг */
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
-  @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); padding: 20px 5%; gap: 20px; } .nav-links { gap: 20px; } .nav-links a { font-size: 0.9rem; } .nav-logo { height: 45px; } }
-
-  /* Карточка книги */
-  .book-card { background: var(--card); padding: 8px; border-radius: 10px; border: 1px solid #30363d; display: flex; flex-direction: column; }
-  .book-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 6px; }
-  .book-card h4 { font-size: 0.75rem; margin: 8px 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .book-card p { font-size: 0.65rem; color: #8b949e; margin-bottom: 8px; }
-
-  /* Формы и кнопки */
-  .btn { width: 100%; padding: 10px; background: var(--main-red); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; text-decoration: none; display: block; text-align: center; font-size: 0.75rem; transition: 0.2s; }
-  .btn:hover { opacity: 0.9; }
-  .box { width: 94%; max-width: 400px; margin: 15px auto; background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #30363d; }
-  .input { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; font-size: 16px; outline: none; transition: 0.3s; }
-  .input:focus { border-color: var(--main-red); }
-
-  /* --- КРАСИВАЯ АДМИНКА --- */
-  .admin-container { width: 95%; max-width: 900px; margin: 20px auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #30363d; }
-  .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; padding-bottom: 15px; margin-bottom: 20px; }
-  .admin-panel-card { background: #0d1117; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 30px; }
+  .admin-container { width: 95%; max-width: 900px; margin: 20px auto; }
+  .admin-card { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #30363d; margin-bottom: 25px; }
+  .input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; font-size: 16px; outline: none; }
+  .btn { width: 100%; padding: 12px; background: var(--red); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 800; text-align: center; font-size: 0.85rem; transition: 0.3s; }
+  .btn:hover { opacity: 0.8; }
   
-  /* Сетка для формы добавления книги */
-  .admin-form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-  @media (min-width: 600px) { .admin-form-grid { grid-template-columns: 1fr 1fr; } .admin-form-grid .full-width { grid-column: span 2; } }
+  .admin-row { background: #0d1117; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+  .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+  .badge.yellow { background: #d2992233; color: #d29922; border: 1px solid #d2992266; }
+  .badge.green { background: #2ea04333; color: #2ea043; border: 1px solid #2ea04366; }
 
-  /* Строка заказа */
-  .admin-row { background: #0d1117; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #30363d; display: flex; flex-direction: column; gap: 12px; transition: 0.2s; }
-  .admin-row:hover { border-color: #555; }
-  .admin-row-info { display: flex; flex-direction: column; gap: 4px; }
-  .admin-row-actions { display: flex; gap: 8px; }
-  @media (min-width: 600px) { .admin-row { flex-direction: row; justify-content: space-between; align-items: center; } }
-
-  /* Бейджики статусов */
-  .badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-  .badge.yellow { background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); }
-  .badge.green { background: rgba(46, 160, 67, 0.15); color: #2ea043; border: 1px solid rgba(46, 160, 67, 0.4); }
-
-  :root { --main-red: #cc2222; --bg: #0a0c10; --card: #161b22; --text: #f0f6fc; }
-  
-  /* Отключаем лишние отступы и настраиваем правильный расчет ширины */
-  *, *:before, *:after { box-sizing: border-box; }
-  body { 
-    margin: 0; background: var(--bg); color: var(--text); 
-    font-family: 'Inter', sans-serif; overflow-x: hidden;
-    -webkit-tap-highlight-color: transparent; /* Убирает вспышку при клике на iPhone */
-  }
-
-  /* Шапка: лого слева, кнопки справа. На очень узких экранах кнопки не ломают шапку */
-  .nav { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 10px 15px; background: #fff; border-bottom: 3px solid var(--main-red); 
-    position: sticky; top: 0; z-index: 1000;
-  }
-  .logo-link { text-decoration: none; color: var(--main-red); font-weight: 900; font-size: 1.1rem; }
-  .nav-links { display: flex; gap: 10px; }
-  .nav-links a, .nav-links button { color: #333; text-decoration: none; font-size: 0.75rem; font-weight: 700; }
-
-  /* Сетка: 2 колонки на телефонах (iPhone/Redmi), 4-5 на ПК */
-  .grid { 
-    display: grid; grid-template-columns: repeat(2, 1fr); 
-    gap: 10px; padding: 10px; 
-  }
-  @media (min-width: 768px) {
-    .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); padding: 20px 5%; gap: 20px; }
-    .nav-links { gap: 20px; }
-    .nav-links a { font-size: 0.9rem; }
-  }
-
-  /* Карточка книги: всё сжато для мобилок */
-  .book-card { 
-    background: var(--card); padding: 8px; border-radius: 10px; 
-    border: 1px solid #30363d; display: flex; flex-direction: column;
-  }
-  .book-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 6px; }
-  .book-card h4 { font-size: 0.75rem; margin: 8px 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .book-card p { font-size: 0.65rem; color: #8b949e; margin-bottom: 8px; }
-
-  /* Кнопки: большие, чтобы удобно попадать пальцем */
-  .btn { 
-    width: 100%; padding: 10px; background: var(--main-red); color: #fff; 
-    border: none; border-radius: 6px; cursor: pointer; font-weight: 700; 
-    text-decoration: none; display: block; text-align: center; font-size: 0.75rem;
-  }
-
-  /* Формы: на мобилках занимают почти всю ширину */
-  .box { width: 94%; max-width: 400px; margin: 15px auto; background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #30363d; }
-  .input { 
-    width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; 
-    border: 1px solid #333; background: #000; color: #fff; 
-    font-size: 16px; /* КРИТИЧНО ДЛЯ IPHONE (запрещает зум) */
-  }
-
-  /* Админка: строки превращаются в блоки на мобилках */
-  .admin-row { 
-    background: #0d1117; padding: 10px; border-radius: 8px; margin-bottom: 8px; 
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  @media (min-width: 600px) {
-    .admin-row { flex-direction: row; justify-content: space-between; align-items: center; }
+  @media (max-width: 600px) {
+    .admin-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .admin-row-btns { width: 100%; display: flex; gap: 8px; }
   }
 `;
 
-// --- [КАТАЛОГ] ---
-const Catalog = () => {
-  const [books, setBooks] = useState([]);
-  const [filter, setFilter] = useState('Все');
-
-  useEffect(() => {
-    onSnapshot(collection(db, "books"), (s) => setBooks(s.docs.map(d => ({ docId: d.id, ...d.data() }))));
-  }, []);
-
-  const dynamicGenres = useMemo(() => {
-    const allGenres = books.map(b => (b.genre || b.жанр || 'Без жанра'));
-    return ['Все', ...new Set(allGenres)];
-  }, [books]);
-
-  const filtered = filter === 'Все' ? books : books.filter(b => (b.genre || b.жанр || 'Без жанра') === filter);
-
-  return (
-    <>
-      <div className="filter-bar">
-        {dynamicGenres.map(g => (
-          <button key={g} className={`filter-btn ${filter === g ? 'active' : ''}`} onClick={() => setFilter(g)}>{g}</button>
-        ))}
-      </div>
-      <div className="grid">
-        {filtered.map(b => {
-          // Определяем, доступна ли книга для заказа (count > 0)
-          const isAvailable = Number(b.count) > 0;
-          
-          return (
-            <div key={b.docId} className="book-card">
-              <img src={b.image || b.имидж} className="book-img" alt="" />
-              <h4 style={{margin: '10px 0 5px', fontSize: '0.85rem'}}>{b.title || b.титул}</h4>
-              <p style={{fontSize: '0.75rem', color: '#8b949e', margin: '0 0 5px'}}>Автор: {b.author || b.автор || 'Не указан'}</p>
-              
-              {/* Показываем количество */}
-              <p style={{fontSize: '0.75rem', color: '#fff', margin: '0 0 10px'}}>В наличии: {b.count || 0} шт.</p>
-              
-              <div style={{fontSize: '10px', fontWeight: 'bold', color: isAvailable ? '#2ecc71' : '#f85149'}}>
-                {isAvailable ? 'В наличии' : (b.status || 'Выдана')}
-              </div>
-              
-              {isAvailable ? (
-                <Link to="/order" state={{t: b.title || b.титул, id: b.docId, currentCount: b.count}} className="btn">ВЗЯТЬ</Link>
-              ) : (
-                <div className="btn" style={{background: '#333'}}>
-                  {b.status === 'Заказана' ? 'ЗАКАЗАНА' : 'ВЫДАНА'}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </>
-  );
-};
-
+// --- КОМПОНЕНТ АДМИНКИ ---
 const Admin = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [orders, setOrders] = useState([]);
-  const [newBook, setNewBook] = useState({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
+  const [newBook, setNewBook] = useState({ title: '', author: '', genre: '', image: '', count: 1 });
 
   useEffect(() => {
     let isMounted = true;
-    const check = async () => {
-      if (window.isAdminChecking) return;
-      window.isAdminChecking = true;
+    const runAuth = async () => {
+      // Предотвращаем двойной prompt в React Strict Mode
+      if (window.isAdminLoginActive) return;
+      window.isAdminLoginActive = true;
 
       const p = prompt("Пароль администратора:");
-      if (!p) { window.location.href = "#/"; window.isAdminChecking = false; return; }
+      if (!p) {
+        window.location.href = "#/";
+        window.isAdminLoginActive = false;
+        return;
+      }
 
       try {
         const res = await fetch('/api/login', {
@@ -221,41 +72,65 @@ const Admin = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: p })
         });
+        
         const data = await res.json();
-        if (isMounted && data.success) setIsAuth(true);
-        else { alert(data.message); window.location.href = "#/"; }
-      } catch (e) { alert("Ошибка сервера"); window.location.href = "#/"; }
-      finally { window.isAdminChecking = false; }
+        
+        if (data.success && isMounted) {
+          setIsAuth(true);
+        } else {
+          alert(data.message);
+          // Если пришел бан (код 429), можем жестко заблокировать экран
+          if (res.status === 429) {
+            document.body.innerHTML = <div style="background:#000;color:red;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;font-family:sans-serif;"><h1>БЕЗОПАСНОСТЬ 518:<br/>IP ЗАБЛОКИРОВАН</h1></div>;
+          } else {
+            window.location.href = "#/";
+          }
+        }
+      } catch (e) {
+        alert("Ошибка связи с API");
+        window.location.href = "#/";
+      } finally {
+        window.isAdminLoginActive = false;
+      }
     };
-    check();
+
+    runAuth();
     return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
     if (isAuth) {
       const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      return onSnapshot(q, s => setOrders(s.docs.map(d => ({id: d.id, ...d.data()}))));
+      return onSnapshot(q, s => {
+        setOrders(s.docs.map(d => ({ id: d.id, ...d.data() })));
+      });
     }
   }, [isAuth]);
 
   const addBook = async () => {
+    if (!newBook.title) return alert("Введите название!");
     const q = query(collection(db, "books"), orderBy("id", "desc"), limit(1));
     const snap = await getDocs(q);
-    let nextId = snap.empty ? 1 : Number(snap.docs[0].data().id) + 1;
-    await addDoc(collection(db, "books"), { ...newBook, id: nextId, count: Number(newBook.count), createdAt: Date.now() });
-    alert("Книга добавлена!");
-    setNewBook({ title: '', author: '', genre: '', image: '', status: 'В наличии', count: 1 });
+    const nextId = snap.empty ? 1 : Number(snap.docs[0].data().id) + 1;
+
+    await addDoc(collection(db, "books"), {
+      ...newBook,
+      id: nextId,
+      count: Number(newBook.count),
+      status: 'В наличии',
+      createdAt: Date.now()
+    });
+    alert(`Книга "${newBook.title}" добавлена!`);
+    setNewBook({ title: '', author: '', genre: '', image: '', count: 1 });
   };
 
-  const setStatus = async (oid, bid, newStatus, currentBookCount) => {
-    await updateDoc(doc(db, "orders", oid), { status: newStatus });
+  const updateOrder = async (oid, bid, status, currentCount) => {
+    await updateDoc(doc(db, "orders", oid), { status });
     if (bid) {
-      let updatedCount = Number(currentBookCount || 0);
-      if (newStatus === 'В наличии (возврат)') {
-         updatedCount += 1;
-         await updateDoc(doc(db, "books", bid), { status: 'В наличии', count: updatedCount });
+      if (status === 'В наличии (возврат)') {
+        await updateDoc(doc(db, "books", bid), { status: 'В наличии', count: Number(currentCount) + 1 });
       } else {
-         await updateDoc(doc(db, "books", bid), { status: newStatus });
+        await updateDoc(doc(db, "books", bid), { status });
       }
     }
   };
@@ -263,271 +138,75 @@ const Admin = () => {
   if (!isAuth) return <div style={{background:'#0a0c10', height:'100vh'}} />;
 
   return (
-    <div className="admin-container" style={{maxWidth:'900px', margin:'20px auto', padding:'0 15px'}}>
-      <div style={{background:'var(--card)', padding:'25px', borderRadius:'15px', border:'1px solid #30363d', marginBottom:'20px'}}>
-        <h2 style={{color:'var(--main-red)', marginTop:0}}>➕ Новое поступление</h2>
+    <div className="admin-container">
+      <div className="admin-card">
+        <h2 style={{marginTop: 0, color: 'var(--red)'}}>➕ Добавить книгу</h2>
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
           <input className="input" placeholder="Название" value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} />
           <input className="input" placeholder="Автор" value={newBook.author} onChange={e => setNewBook({...newBook, author: e.target.value})} />
           <input className="input" placeholder="Жанр" value={newBook.genre} onChange={e => setNewBook({...newBook, genre: e.target.value})} />
           <input className="input" type="number" placeholder="Кол-во" value={newBook.count} onChange={e => setNewBook({...newBook, count: e.target.value})} />
-          <input className="input" style={{gridColumn:'span 2'}} placeholder="Ссылка на обложку" value={newBook.image} onChange={e => setNewBook({...newBook, image: e.target.value})} />
         </div>
-        <button className="btn" style={{background:'#2ea043', marginTop:'15px'}} onClick={addBook}>СОХРАНИТЬ В КАТАЛОГ</button>
+        <input className="input" placeholder="Ссылка на обложку" value={newBook.image} onChange={e => setNewBook({...newBook, image: e.target.value})} />
+        <button className="btn" style={{background: 'var(--green)', marginTop: '10px'}} onClick={addBook}>СОХРАНИТЬ В БАЗУ</button>
       </div>
 
-      <h3 style={{color:'#8b949e', marginBottom:'15px'}}>📦 Текущие заказы</h3>
-      {orders.map(o => (
-        <div key={o.id} className="admin-row" style={{background:'var(--card)', padding:'15px', borderRadius:'10px', marginBottom:'10px', display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid #30363d'}}>
-          <div><b style={{fontSize:'1.1rem'}}>{o.book}</b><br/>
-            <span style={{color:'#8b949e'}}>{o.fio} • {o.class} класс</span><br/>
-            <span className={`badge ${o.status === 'Выдана' ? 'green' : 'yellow'}`} style={{marginTop:'5px', display:'inline-block'}}>
-              {o.status || 'Заказана'}
-            </span>
+      <h3>📚 Управление заказами</h3>
+      {orders.length === 0 ? <p style={{color:'#8b949e'}}>Заказов пока нет...</p> : 
+        orders.map(o => (
+          <div key={o.id} className="admin-row">
+            <div>
+              <b style={{fontSize: '1.1rem'}}>{o.book}</b><br/>
+              <small style={{color: '#8b949e'}}>{o.fio} • {o.class} класс</small>
+              <div style={{marginTop: '8px'}}>
+                <span className={`badge ${o.status === 'Выдана' ? 'green' : 'yellow'}`}>
+                  {o.status || 'Заказана'}
+                </span>
+              </div>
+            </div>
+            <div className="admin-row-btns">
+              {(o.status === 'Заказана' || !o.status) && (
+                <button onClick={() => updateOrder(o.id, o.bookId, 'Выдана', o.bookCount)} className="btn" style={{padding: '8px 20px', width: 'auto', background: 'var(--green)'}}>ВЫДАТЬ</button>
+              )}
+              {o.status === 'Выдана' && (
+                <button onClick={() => updateOrder(o.id, o.bookId, 'В наличии (возврат)', o.bookCount)} className="btn" style={{padding: '8px 20px', width: 'auto', background: '#3498db'}}>ВЕРНУТЬ</button>
+              )}
+            </div>
           </div>
-          <div style={{display:'flex', gap:'10px'}}>
-            {(o.status === 'Заказана' || !o.status) && (
-              <button className="btn" style={{background:'#2ea043', width:'120px', padding:'8px'}} onClick={() => setStatus(o.id, o.bookId, 'Выдана', o.bookCount)}>ВЫДАТЬ</button>
-            )}
-            {o.status === 'Выдана' && (
-              <button className="btn" style={{background:'#3498db', width:'120px', padding:'8px'}} onClick={() => setStatus(o.id, o.bookId, 'В наличии (возврат)', o.bookCount)}>ВЕРНУТЬ</button>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// --- [ГЛАВНАЯ] ---
-const Home = () => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true); // Добавим лоадер для проверки
-
-  useEffect(() => {
-    // Проверь, чтобы в Firebase коллекция называлась именно "events"
-    const q = collection(db, "events");
-    const unsub = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(d => ({
-        id: d.id, 
-        ...d.data()
-      }));
-      console.log("Данные из БД:", items); // Глянь в консоль браузера (F12)
-      setEvents(items);
-      setLoading(false);
-    }, (error) => {
-      console.error("Ошибка Firebase:", error);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
-
-  return (
-    <div style={{maxWidth: '850px', margin: '0 auto', padding: '20px', textAlign: 'center'}}>
-      <img src={logoUrl} alt="logo" style={{height: '90px'}} />
-      <h1>Библиотека Школы 518</h1>
-      
-      {loading && <p>Загрузка новостей...</p>}
-      {!loading && events.length === 0 && <p>Событий пока нет</p>}
-
-      {events.map((e) => (
-        <div key={e.id} className="box" style={{maxWidth: '100%', textAlign: 'left', marginBottom: '20px'}}>
-          {e.image && <img src={e.image} style={{width: '100%', borderRadius: '10px', marginBottom: '15px'}} alt="event" />}
-          <h3>{e.title || "Без названия"}</h3>
-          <p style={{color: '#8b949e'}}>{e.description}</p>
-          <span style={{fontSize: '11px', color: '#cc2222'}}>{e.date}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-
-// --- [ПРОФИЛЬ] ---
-const Profile = ({ user }) => {
-  const [userData, setUserData] = useState(null);
-  const [orders, setOrders] = useState([]);
-  useEffect(() => {
-    if (user) {
-      getDoc(doc(db, "users", user.uid)).then(s => setUserData(s.data()));
-      onSnapshot(query(collection(db, "orders"), where("userEmail", "==", user.email)), s => setOrders(s.docs.map(d => d.data())));
-    }
-  }, [user]);
-  if (!user) return <div className="box">Войдите в кабинет</div>;
-  return (
-    <div className="box">
-      <h2>Мой профиль</h2>
-      <div style={{background: '#0d1117', padding: '15px', borderLeft: '4px solid var(--main-red)', borderRadius: '8px'}}>
-        <p><b>ФИО:</b> {userData?.fio}</p>
-        <p><b>Класс:</b> {userData?.class}</p>
-        <p><b>Email:</b> {user.email}</p>
-      </div>
-      <h3 style={{marginTop: '20px'}}>Мои книги:</h3>
-      {orders.map((o, i) => <div key={i} className="admin-row"><span>{o.book}</span><span style={{color:'var(--main-red)', fontWeight:'bold'}}>{o.status}</span></div>)}
-    </div>
-  );
-};
-
-// --- [АВТОРИЗАЦИЯ] ---
-const Auth = () => {
-  const [isReg, setIsReg] = useState(false);
-  const [form, setForm] = useState({ email: '', pass: '', fio: '', class: '' });
-  const nav = useNavigate();
-  const handle = async () => {
-    try {
-      if (isReg) {
-        const res = await createUserWithEmailAndPassword(auth, form.email, form.pass);
-        await setDoc(doc(db, "users", res.user.uid), { fio: form.fio, class: form.class, email: form.email });
-      } else await signInWithEmailAndPassword(auth, form.email, form.pass);
-      nav('/');
-    } catch (e) { alert(e.message); }
-  };
-  return (
-    <div className="box">
-      <h2>{isReg ? 'Регистрация' : 'Вход'}</h2>
-      {isReg && <><input className="input" placeholder="ФИО" onChange={e => setForm({...form, fio: e.target.value})}/><input className="input" placeholder="Класс" onChange={e => setForm({...form, class: e.target.value})}/></>}
-      <input className="input" placeholder="Email" onChange={e => setForm({...form, email: e.target.value})}/>
-      <input className="input" type="password" placeholder="Пароль" onChange={e => setForm({...form, pass: e.target.value})}/>
-      <button className="btn" onClick={handle}>{isReg ? 'ОК' : 'ВОЙТИ'}</button>
-      <p style={{textAlign: 'center', cursor:'pointer', fontSize:'0.8rem'}} onClick={() => setIsReg(!isReg)}>{isReg ? 'Уже есть аккаунт' : 'Создать аккаунт'}</p>
-    </div>
-  );
-};
-
-// --- [ОФОРМЛЕНИЕ ЗАКАЗА] ---
-const Order = ({ user }) => {
-  const { state } = useLocation();
-  const nav = useNavigate();
-
-  const confirm = async () => {
-    if (!user) return nav('/auth');
-
-    try {
-      // 1. ПРОВЕРКА НА ДВОЙНОЙ ЗАКАЗ
-      // Ищем все заказы этого пользователя
-      const q = query(collection(db, "orders"), where("userEmail", "==", user.email));
-      const snap = await getDocs(q);
-      
-      // Проверяем, есть ли среди них заказ на ЭТУ книгу, который еще не вернули
-      const hasActiveOrder = snap.docs.some(d => 
-        d.data().bookId === state.id && d.data().status !== 'В наличии (возврат)'
-      );
-
-      if (hasActiveOrder) {
-        alert("Ошибка: Вы уже заказали эту книгу или она сейчас у вас на руках!");
-        return; // Останавливаем выполнение
+        ))
       }
-
-      // 2. ПРОВЕРКА НАЛИЧИЯ И ОБНОВЛЕНИЕ КНИГИ
-      const bookRef = doc(db, "books", state.id);
-      const bookSnap = await getDoc(bookRef);
-      
-      if (!bookSnap.exists()) {
-        alert("Книга не найдена!");
-        return;
-      }
-
-      const bookData = bookSnap.data();
-      const currentCount = Number(bookData.count) || 0;
-
-      if (currentCount <= 0) {
-        alert("К сожалению, эта книга только что закончилась.");
-        return;
-      }
-
-      // Вычисляем новый остаток книг
-      const newCount = currentCount - 1;
-      // Если осталась хоть одна, статус "В наличии", если ноль - "Заказана" (закончились на полке)
-      const newStatus = newCount > 0 ? "В наличии" : "Заказана";
-
-      // Обновляем количество в базе данных книг
-      await updateDoc(bookRef, { 
-        count: newCount, 
-        status: newStatus 
-      });
-
-      // 3. ФОРМИРУЕМ САМ ЗАКАЗ
-      const uSnap = await getDoc(doc(db, "users", user.uid));
-      const uData = uSnap.data();
-
-      await addDoc(collection(db, "orders"), { 
-        userEmail: user.email, 
-        fio: uData?.fio || 'Не указано', 
-        class: uData?.class || 'Не указан', 
-        book: state.t, 
-        bookId: state.id, 
-        date: new Date().toLocaleDateString(), 
-        status: "Заказана", // Требуемый статус
-        createdAt: Date.now() // ВРЕМЯ для сортировки в админке по новизне
-      });
-
-      alert("Успешно забронировано!"); 
-      nav('/profile');
-      
-    } catch (error) {
-      console.error(error);
-      alert("Произошла ошибка при оформлении. Попробуйте снова.");
-    }
-  };
-
-  if (!state) return <div className="box" style={{textAlign:'center'}}>Ошибка: Книга не выбрана</div>;
-
-  return (
-    <div className="box" style={{textAlign:'center'}}>
-      <h3>Взять "{state?.t}"?</h3>
-      <button className="btn" onClick={confirm}>ДА, ЗАКАЗАТЬ</button>
     </div>
   );
 };
 
-// --- [МАРШРУТИЗАЦИЯ И РЕНДЕР] ---
+// --- ГЛАВНЫЙ APP ---
 export default function App() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // 1. Проверка авторизации
     onAuthStateChanged(auth, u => setUser(u));
-
-    // 2. ПРИНУДИТЕЛЬНАЯ АДАПТАЦИЯ ДЛЯ МОБИЛОК (iPhone/Redmi)
-    // Проверяем, есть ли уже этот мета-тег, чтобы не дублировать
-    if (!document.querySelector('meta[name="viewport"]')) {
-      const meta = document.createElement('meta');
-      meta.name = "viewport";
-      meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-      document.getElementsByTagName('head')[0].appendChild(meta);
-    }
-
-    // 3. ЗАЩИТА ОТ ВЗЛОМА (Ловушка DevTools)
-    console.log('%cВНИМАНИЕ: СИСТЕМА ЗАЩИТЫ ШКОЛЫ 518 АКТИВИРОВАНА!', 'color: red; font-size: 20px; font-weight: bold;');
-    const hackerTrap = setInterval(() => { 
-      debugger; 
-    }, 1000);
-
-    // Очищаем интервал, если компонент вдруг размонтируется
-    return () => clearInterval(hackerTrap);
+    // Твоя ловушка
+    const trap = setInterval(() => { debugger; }, 1000);
+    return () => clearInterval(trap);
   }, []);
 
   return (
     <Router>
       <style>{styles}</style>
       <nav className="nav">
-        <Link to="/" className="logo-link"><img src={logoUrl} className="nav-logo" alt="" />LIB.518</Link>
+        <Link to="/" className="logo">LIB.518</Link>
         <div className="nav-links">
           <Link to="/">Главная</Link>
-          <Link to="/catalog">Каталог</Link>
-          {user && <Link to="/profile">Кабинет</Link>}
-          <a href="https://518shkola.oshkole.ru" target="_blank" rel="noreferrer">Сайт</a>
-          <Link to="/admin" style={{fontSize: '10px', color: 'var(--main-red)', border: '1px solid var(--main-red)', padding: '2px 5px', borderRadius: '4px'}}>ADM</Link>
-          {user ? <button onClick={() => signOut(auth)} style={{color:'var(--main-red)'}}>Выход</button> : <Link to="/auth" style={{color:'var(--main-red)'}}>Вход</Link>}
+          <Link to="/catalog">Книги</Link>
+          <Link to="/admin" style={{color: 'var(--red)'}}>АДМИН</Link>
+          {user ? <button onClick={() => signOut(auth)}>Выход</button> : <Link to="/auth">Вход</Link>}
         </div>
       </nav>
+
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/catalog" element={<Catalog />} />
-        <Route path="/profile" element={<Profile user={user} />} />
+        <Route path="/" element={<div style={{padding:'50px', textAlign:'center'}}><h1>Библиотека школы 518</h1><p>Используйте меню для навигации.</p></div>} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/order" element={<Order user={user} />} />
+        {/* Добавь свои роуты Auth, Catalog и т.д. сюда */}
       </Routes>
     </Router>
   );
