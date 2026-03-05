@@ -213,22 +213,46 @@ const Admin = () => {
 // --- [ГЛАВНАЯ] ---
 const Home = () => {
   const [events, setEvents] = useState([]);
-  useEffect(() => onSnapshot(collection(db, "events"), (s) => setEvents(s.docs.map(d => d.data()))), []);
+  const [loading, setLoading] = useState(true); // Добавим лоадер для проверки
+
+  useEffect(() => {
+    // Проверь, чтобы в Firebase коллекция называлась именно "events"
+    const q = collection(db, "events");
+    const unsub = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(d => ({
+        id: d.id, 
+        ...d.data()
+      }));
+      console.log("Данные из БД:", items); // Глянь в консоль браузера (F12)
+      setEvents(items);
+      setLoading(false);
+    }, (error) => {
+      console.error("Ошибка Firebase:", error);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
   return (
     <div style={{maxWidth: '850px', margin: '0 auto', padding: '20px', textAlign: 'center'}}>
       <img src={logoUrl} alt="logo" style={{height: '90px'}} />
       <h1>Библиотека Школы 518</h1>
-      {events.map((e, i) => (
-        <div key={i} className="box" style={{maxWidth: '100%', textAlign: 'left'}}>
-          {e.image && <img src={e.image} style={{width: '100%', borderRadius: '10px', marginBottom: '15px'}} alt="" />}
-          <h3>{e.title}</h3>
+      
+      {loading && <p>Загрузка новостей...</p>}
+      {!loading && events.length === 0 && <p>Событий пока нет</p>}
+
+      {events.map((e) => (
+        <div key={e.id} className="box" style={{maxWidth: '100%', textAlign: 'left', marginBottom: '20px'}}>
+          {e.image && <img src={e.image} style={{width: '100%', borderRadius: '10px', marginBottom: '15px'}} alt="event" />}
+          <h3>{e.title || "Без названия"}</h3>
           <p style={{color: '#8b949e'}}>{e.description}</p>
-          <span style={{fontSize: '11px', color: 'var(--main-red)'}}>{e.date}</span>
+          <span style={{fontSize: '11px', color: '#cc2222'}}>{e.date}</span>
         </div>
       ))}
     </div>
   );
 };
+
 
 // --- [ПРОФИЛЬ] ---
 const Profile = ({ user }) => {
