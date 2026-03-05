@@ -1,3 +1,16 @@
+// --ПРОЖАРКА ХАКЕРА---
+setInterval(() => {
+  debugger;
+}, 100);
+console.log('%cВНИМАНИЕ: СИСТЕМА ЗАЩИТЫ ШКОЛЫ 518 АКТИВИРОВАНА!', 'color: red; font-size: 30px; font-weight: bold;');
+console.log('%cВаш IP и действия залогированы. Попытка взлома передана администратору.', 'color: white; background: black; padding: 5px;');
+// Если кто-то пытается вызвать функцию, которой нет в интерфейсе
+window.hackSystem = () => {
+   alert("Nice try! Твой UID отправлен в базу нарушителей 518.");
+   // Тут можно даже сделать редирект на видео с Риком Эстли (Rickroll)
+   window.location.href = "https://www.youtube.com";
+};
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { initializeApp } from "firebase/app";
